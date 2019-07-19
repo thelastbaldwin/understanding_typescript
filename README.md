@@ -5,14 +5,18 @@ Notes from Udemy's Understanding TypeScript course
 ## Types
 
 ### Implicit Types
-    let myName = "Steve";
-    let myAge = 34;
-    let hasHobbies = true;
+```typescript
+let myName = "Steve";
+let myAge = 34;
+let hasHobbies = true;
+```
 
 ### Explicit Types
-    let myName: string = "Steve";
-    let myAge: number = 34;
-    let hasHobbies: boolean = true;
+```typescript
+let myName: string = "Steve";
+let myAge: number = 34;
+let hasHobbies: boolean = true;
+```
 
 ### Arrays
 ```typescript
@@ -245,3 +249,176 @@ Disadvantages: Basically inferior to modules. Namespaces can pollute the global 
 ## Modules
 
 These essentially work the same as ES6 imports. If using just the typescript compiler, you'll need some kind of module loading shim until native ES6 imports are supported. If using webpack, or another bundling solution, you'll need to follow those standards.
+
+## Interfaces
+
+Interfaces can enforce data contracts better than simply describing types. A way to guarantee that certain methods or properties are available.
+```typescript
+interface NamedPerson {
+    firstName: string
+}
+
+function greet(person: NamedPerson){
+    console.log("Hello, " + person.firstName);
+}
+
+function changeName(person: NamedPerson){
+    person.firstName = "Anna";
+}
+
+const person = {
+    firstName: "Max",
+    age: 27
+};
+
+greet(person);
+changeName(person);
+greet(person);
+```
+
+Passing object literals can trigger errors when the object contains properties that don't exisit on the interface, even if the object contains all the required properties of that interface. Object literals are checked more strictly than named variables. Interfaces are not included in the compiled JS and can't be enforced at runtime.
+
+### Optional properties
+```typescript
+interface NamedPerson {
+    firstName: string;
+    age?: number;
+    [propName: string]: any;
+}
+```
+
+### Methods
+```typescript
+interface NamedPerson {
+    firstName: string;
+    age?: number;
+    [propName: string]: any;
+    greet(lastName: string): void;
+}
+```
+
+### Classes
+```typescript
+class Person implements NamedPerson {
+    firstName: string;
+
+    constructor(firstName: string){
+        this.firstName = firstName;
+    }
+
+    greet(lastName: string){
+        console.log("Hi, I am " + this.firstName + " " + lastName);
+    }
+}
+```
+
+### Functions
+```typescript
+interface DoubleValueFunc {
+    (number1: number, number2: number): number;
+}
+
+let myDoubleFunction: DoubleValueFunc;
+myDoubleFunction = function(value1: number, value2: number){
+    return (value1 + value2) * 2
+};
+
+console.log(myDoubleFunction(10, 20)); //60
+```
+
+### Inheritance
+```typescript
+interface AgedPerson extends NamedPerson {
+    age: number; // this property is now required
+}
+
+const oldPerson: AgedPerson = {
+    age: 80,
+    firstName: "Clint",
+    greet(lastName: string){
+        console.log("Hello");
+    }
+};
+```
+
+## Generics
+
+### Functions
+```typescript
+function echo(data:any){
+    return data;
+}
+
+function betterEcho<T>(data: T){
+    return data;
+}
+
+console.log(betterEcho("Max").length);
+// console.log(betterEcho<number>(27).length); //Property 'length' does not exist on type 'number'
+console.log(betterEcho({name: "Max", age: 27}));
+```
+
+### Built-in
+
+Array is a generic type by default.
+
+```typescript
+const testResults: Array<number> = [1.94, 2.33];
+testResults.push(-2.99);
+// testResults.push("foo"); // error
+
+function printAll<T>(args: T[]){
+    args.forEach(element => console.log(element));
+}
+printAll<string>(["Apples", "Bananas"])
+```
+
+### Types
+```typescript
+const echo2: <T>(data: T) => T = betterEcho;
+console.log(echo2<string>("Something"));
+```
+
+### Class
+```typescript
+class SimpleMath<T extends number | string> {
+    baseValue: T;
+    multiplyValue: T;
+
+    constructor(baseValue: T, multiplyValue: T){
+        this.baseValue = baseValue,
+        this.multiplyValue = multiplyValue;
+    }
+    calculate(): number {
+        return +this.baseValue * +this.multiplyValue;
+    }
+}
+
+const simpleMath = new SimpleMath<number>(10, 20);
+const simpleMathString = new SimpleMath<string>("10", "20");
+// const simpleMathBoolean = new SimpleMath<boolean>(true, false); // Type 'boolean' does not satisfy the constraint 'string | number'
+console.log(simpleMath.calculate());
+console.log(simpleMathString.calculate());
+```
+
+#### Multiple Types
+```typescript
+class SimpleMath<T extends number | string, U extends number | string> {
+    baseValue: T;
+    multiplyValue: U;
+
+    constructor(baseValue: T, multiplyValue: U){
+        this.baseValue = baseValue,
+        this.multiplyValue = multiplyValue;
+    }
+    calculate(): number {
+        return +this.baseValue * +this.multiplyValue;
+    }
+}
+
+const simpleMath = new SimpleMath<number, number>(10, 20);
+const simpleMathString = new SimpleMath<string, string>("10", "20");
+const simpleMathMixed = new SimpleMath<number, string>(50, "50");
+
+console.log(simpleMathMixed.calculate());
+```
